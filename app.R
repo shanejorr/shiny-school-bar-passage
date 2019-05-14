@@ -111,7 +111,7 @@ full$year <- as.character(full$year)
 # ui ------------------
 ui <- fluidPage(
   
-  titlePanel("The relationship between a school's undergraduate GPA, LSAT, and bar passage rates"),
+  titlePanel("The relationship between a school's undergraduate GPA, LSAT, and bar passage rate"),
   tags$hr(),
   sidebarLayout(
     sidebarPanel(width = 2,
