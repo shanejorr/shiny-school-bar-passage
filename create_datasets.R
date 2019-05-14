@@ -7,19 +7,25 @@
 
 library(tidyverse)
 
+# we need to scale LSAT and GPA; plotly oddly plots columns scaled with the 'scale' function
+# so we will use a custom function to scale columns
+custom_scale <- function(x) (x - mean(x, na.rm = T)) / sd(x, na.rm = T)
+
 # read in and transform admissions data -----------
 admissions <- read_csv('https://s3.amazonaws.com/aba-disclosure-509/admissions.csv') %>%
   # select needed variables
-  select(schoolname, calendaryear, uggpa50, lsat50) %>%
-  # scale gpa and lsat and add together, then convert to percent rank (between 0 and 1)
-  # needed so we can create a combined scaled column
-  mutate(scaled_admissions = round(percent_rank(scale(uggpa50) + scale(lsat50)),2),
+  select(schoolname, calendaryear, uggpa50, lsat50)%>%
+  # remove crazy outliers that have something wrong
+  filter(uggpa50 > 2 & lsat50 > 130) %>%
+  # scale gpa and lsat and add together, then scale this number
+  # when scaling the sum don't use scale function because it creates odd side effects in plots
+  # needed so we can create a combined GPA / LSAT scaled column
+  mutate(scaled_admissions = custom_scale(uggpa50) + custom_scale(lsat50),
+         scaled_admissions = round(custom_scale(scaled_admissions), 2),
          # add two to calendar year, to create bar year
          firsttimebaryear = calendaryear + 2) %>%
   # no longer need calendar year, since we will join datasets on bar year
-  select(-calendaryear) %>%
-  # remove crazy outliers that have something wrong
-  filter(uggpa50 > 2 & lsat50 > 130)
+  select(-calendaryear) 
 
 # read in and transform bar data ----------- 
 bar <- read_csv('https://s3.amazonaws.com/aba-disclosure-509/bar_pass_jurisd.csv') %>%
