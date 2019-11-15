@@ -45,9 +45,9 @@ plot_rates <- function(df, select_year, eval, metric, select_school) {
   df %>%
     # create column signifying whether school is selected
     mutate(selected_school = ifelse(.$schoolname == select_school, T, F)) %>%
-    plot_ly(x = .[[metric]], y = .[[eval]], color = ~selected_school,
+    plot_ly(x = .[[metric]], y = .[[eval]], color = ~selected_school, 
             # set color palette to one that display categoricals well
-            colors = "Accent",
+            colors = c('#4682B4', '#080808'),
             # add tooltip (hover) information
             hoverinfo = 'text',
             text = ~paste0("School Name: ", schoolname,
@@ -58,13 +58,14 @@ plot_rates <- function(df, select_year, eval, metric, select_school) {
                            '<br>Median LSAT Score: ', lsat50)) %>%
     add_markers(x = .[[metric]], y = .[[eval]],
                 marker = list(
-                  opacity = 0.9,
-                  size = 8,
+                  opacity = 0.8,
+                  size = 7,
                   line = list(
                     width = 3
                   ))) %>%
     # add loess smoother fit line
-    add_lines(y = ~fitted(loess(df[[eval]] ~ df[[metric]])), color = 'rgb(158,202,225)') %>%
+    add_lines(y = ~fitted(loess(df[[eval]] ~ df[[metric]])), 
+              color = 'rgb(158,202,225)') %>%
     # remove legend
     layout(showlegend = FALSE,
            title = "Bar passage and median law school undergraduate GPA and LSAT scores",

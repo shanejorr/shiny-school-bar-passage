@@ -12,7 +12,7 @@ library(tidyverse)
 custom_scale <- function(x) (x - mean(x, na.rm = T)) / sd(x, na.rm = T)
 
 # read in and transform admissions data -----------
-admissions <- read_csv('https://s3.amazonaws.com/aba-disclosure-509/admissions.csv') %>%
+admissions <- read_csv('https://s3.amazonaws.com/aba-disclosures/admissions.csv.gz') %>%
   # select needed variables
   select(schoolname, calendaryear, uggpa50, lsat50)%>%
   # remove crazy outliers that have something wrong
@@ -28,7 +28,7 @@ admissions <- read_csv('https://s3.amazonaws.com/aba-disclosure-509/admissions.c
   select(-calendaryear) 
 
 # read in and transform bar data ----------- 
-bar <- read_csv('https://s3.amazonaws.com/aba-disclosure-509/bar_pass_jurisd.csv') %>%
+bar <- read_csv('https://s3.amazonaws.com/aba-disclosures/bar_pass_jur.csv.gz') %>%
   select(-schoolid, -calendaryear) %>%
   # we want pass rates by school and year
   group_by(schoolname, firsttimebaryear) %>%
@@ -45,14 +45,18 @@ bar <- read_csv('https://s3.amazonaws.com/aba-disclosure-509/bar_pass_jurisd.csv
             pass_diff = sum(state_perc_takers)) %>%
   # we want pass rates in whole numbers
   mutate_at(vars(pass_rate, pass_diff),
-            funs(as.integer(. * 100)))
+            ~(as.integer(. * 100)))
 
 # merge these two datasets with inner join because we only want
 # rows with all information
 full <- inner_join(admissions, bar, by = c('schoolname', 'firsttimebaryear')) %>%
   rename(year = firsttimebaryear) %>%
   # sort by school name and year
-  arrange(schoolname, year)
+  arrange(schoolname, year) %>%
+  # remove Puerto Rico schools because they sit as outliers
+  # remove Univ. of Wisconsin and Marquette because in Wisconsin, all Wisconsin law
+  # school grads are automatically counted as passing the bar
+  filter(!str_detect(schoolname, "^Inter Amer|^Pontifical|Puerto Rico|Wisconsin|Marquette"))
 
 # write out dataset
 write_rds(full, 'data/bar_passage.rds')
